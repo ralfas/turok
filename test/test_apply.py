@@ -1,14 +1,26 @@
 from unittest import TestCase
 
-from apply import apply as apply2
+from apply import apply as apply2, TABLE_PREFIX, TABLE_DELIMITER
 
 class TestApply(TestCase):
 
 	def test_apply(self):
 
 		tests = [
-			{# fresh write
-				'existing_data' : None,
+			{# fresh write, table exists
+				'existing_data' : {
+					DynamoDBDummyTable(table_name=TABLE_PREFIX + TABLE_DELIMITER + '20sec', schema='schema', items=[])
+				},
+				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'expected' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'expected_stats' : [
+					'apply.sum.count'
+				]
+			},
+			{# fresh write, table doesn't exist
+				'existing_data' : {
+					DynamoDBDummyTable(table_name=TABLE_PREFIX + TABLE_DELIMITER + '20sec', schema='schema', items=[])
+				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
 				'expected' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
 				'expected_stats' : [
@@ -93,9 +105,19 @@ class TestApply(TestCase):
 		for test in tests:
 			test_counter += 1
 
-			# tear down mock dynamodb
+			conn = DynamoDBDummyConnection(region='region', aws_access_key_id='aws_access_key_id', aws_secret_access_key='aws_secret_access_key')
+			DynamoDBDummyTable
 			# set up mock dynamodb
 			# populate mock dynamodb with test['existing_data']
 
-			out = apply2(test['change'])
+			c = test['change']
+
+			out = apply2(
+				metric=c['metric'],
+				start_time=c['start_time'],
+				resolution=c['resolution'],
+				datapoints=c['datapoints'],
+				aggregation_type=c['aggregation_type'],
+
+			)
 			self.assertListEqual(out, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out))
