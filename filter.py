@@ -6,6 +6,9 @@ date_format_regex = re.compile('[0-9]{2,2}-[0-9]{2,2}-[0-9]{4,4}')
 resolution_format_regex = re.compile('^\d+(\.\d+)?(sec|min)$')
 
 def filter(change):
+	"""
+	Checks if the change has the required information to be applied.
+	"""
 
 	if change is None:
 		return None
