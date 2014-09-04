@@ -1,4 +1,4 @@
-from boto.dynamodb2.fields import HashKey, RangeKey, BaseSchemaField
+from boto.dynamodb2.fields import HashKey, RangeKey
 
 SCHEMA = [
 	HashKey('metric'),

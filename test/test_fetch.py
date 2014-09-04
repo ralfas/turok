@@ -2,30 +2,33 @@ from unittest import TestCase
 
 from fetch import fetch, MAX_ITEMS
 
-class SQSDummyQueue(object):
-
-	def __init__(self, messages=[]):
-
-		self.messages = []
-		for message in messages:
-			self.messages.append(SQSDummyMessage(message))
-
-	def get_messages(self, num_messages=1, visibility=30):
-
-		out = self.messages[:num_messages]
-		self.messages = self.messages[num_messages:]
-
-		return out
-
-class SQSDummyMessage(object):
-	
-	def __init__(self, body):
-		self.body = body
-
-	def get_body(self):
-		return self.body
+from boto.sqs.regioninfo import SQSRegionInfo
+from boto.sqs.message import Message
 
 class TestFetch(TestCase):
+
+	def setUp(self):
+
+		sqsregioninfo = SQSRegionInfo(name='localhost_region', endpoint='localhost')
+		self.connection = sqsregioninfo.connect(
+			port=8001,
+			aws_access_key_id='id',
+			aws_secret_access_key='secret',
+			is_secure=False
+		)
+
+		self.queue = self.connection.create_queue('test_queue')
+	
+	def populate_queue(self, messages):
+
+		for item in messages:
+			message = Message()
+			message.set_body(item)
+			self.queue.write(message)
+
+	def tearDown(self):
+
+		self.connection.delete_queue(self.queue)
 
 	def test_fetch(self):
 
@@ -164,12 +167,11 @@ class TestFetch(TestCase):
 		for test in tests:
 			test_counter += 1
 
-			# tear down mock SQS
-			# set up mock SQS
-			# populate mock SQS with messages
-			queue = SQSDummyQueue(test['changes'])
+			self.populate_queue(test['changes'])
 			
-			out = fetch(items=MAX_ITEMS, queue=queue)
+			out = fetch(items=MAX_ITEMS, queue=self.queue)
 			out_messages = [o.get_body() for o in out]
 
 			self.assertListEqual(out_messages, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out_messages))
+
+			self.queue.clear()

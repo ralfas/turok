@@ -1,13 +1,14 @@
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.items import Item
 from boto.exception import JSONResponseError
+from boto.dynamodb2.exceptions import ItemNotFound
 
 from schema import SCHEMA
 
 import json
 
 TABLE_PREFIX = 'turok'
-TABLE_DELIMITER = '_'
+TABLE_JOINER = '_'
 
 def apply(metric, start_time, resolution, datapoints, aggregation_type, connection):
 	"""
@@ -36,28 +37,61 @@ def apply(metric, start_time, resolution, datapoints, aggregation_type, connecti
 	"""
 
 	table_name = get_table_name(resolution)
-	
+
 	try:
 		table = Table(table_name, connection=connection)
 		table.describe()
 
 	except JSONResponseError, e:
 
-		if e.error_code == 'Cannot do operations on a non-existent table':
+		if e.error_code == 'ResourceNotFoundException':
 			table = Table.create(table_name, schema=SCHEMA, connection=connection)
 		else:
 			raise e
 
-	encoded_datapoints = json.dumps(datapoints)
+	try:
+		m = table.get_item(consistent=True, metric=metric, start_time=start_time)
+		m['datapoints'] = json.dumps(
+			aggregate(json.loads(m['datapoints']), datapoints, aggregation_type)
+		)
 
-	metric = Item(table, data={
-		'metric' : metric,
-		'start_time' : start_time,
-		'datapoints' : encoded_datapoints
-	})
+	except ItemNotFound, e:
 
-	print metric.save()
+		m = Item(table)
+		m['metric'] = metric
+		m['start_time'] = start_time
+		m['datapoints'] = json.dumps(datapoints)
+
+	m.save()
 
 def get_table_name(resolution):
 
-	return TABLE_PREFIX + TABLE_DELIMITER + resolution
+	return TABLE_PREFIX + TABLE_JOINER + resolution
+
+def aggregate(existing_datapoints, new_datapoints, aggregation_type):
+
+	counter = 0
+	while counter < len(existing_datapoints):
+
+		d = existing_datapoints[counter]
+		new_d = new_datapoints[counter]
+
+		# Replace datapoint with new
+		if d == None:
+			d = new_d
+		# Combine datapoint with new
+		elif new_d != None:
+
+			if aggregation_type == 'sum':
+				d += new_d
+			elif aggregation_type == 'average':
+				d = (d + new_d) / 2
+			elif aggregation_type == 'minimum':
+				d = d if d < new_d else new_d
+			elif aggregation_type == 'maximum':
+				d = d if d > new_d else new_d
+
+		existing_datapoints[counter] = d
+		counter += 1
+
+	return existing_datapoints

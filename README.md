@@ -1,5 +1,50 @@
 # turok
 
+## Introduction
+
+Turok is a timeseries database abstraction over DynamoDB.
+
+## Architecture Overview
+
+Turok consists of:
+- A library - `turok-lib` - for transforming metric data into Turok compatible data structures. These can then be pushed onto SQS.
+- An aggregator application - `turokd` - that consumes from SQS and writes it to DynamoDB, applying aggregation rules as defined in the message.
+- A Graphite finder - `turok-reader` - that is able to read data from DynamoDB and present it to Graphite.
+- A Data Pipeline template - `turok-keeper` - that applies a configured retention policy per data resolution.
+
+## Turok-Lib
+
+TODO
+
+### Turok Message Format
+
+## TurokD
+
+TODO
+
+### Turok DynamoDB Schema
+
+Table name: <TABLE_PREFIX><TABLE_JOINER><RESOLUTION> ; `turok_20sec`
+{
+	metric : String; `node1.messages_received.count`
+	start_time : String; `01-04-2014 14:35:00`
+	datapoints : JSON Encoded Datapoint List; `[1, 2, 30000, 3, 40]`
+}
+
+DynamoDB only supports sets and not lists, so we need to serialise it for persistence.
+
+## Turok-Reader
+
+TODO
+
+Reference: http://graphite.readthedocs.org/en/latest/storage-backends.html
+
+## Turok-Keeper
+
+TODO
+
+Reference: http://docs.aws.amazon.com/datapipeline/latest/DeveloperGuide/what-is-datapipeline.html
+
 ## Development Environment
 
 ### Install Dependencies
@@ -29,6 +74,10 @@ Start DynamoDB Local:
 
 	java -Djava.library.path=./bin/dynamodb_local/DynamoDBLocal_lib -jar bin/dynamodb_local/DynamoDBLocal.jar --inMemory
 
-Run Tests:
+Start SQS moto_server:
+
+	moto_server -p 8001 sqs
+
+Run tests:
 
 	./bin/run_tests.sh

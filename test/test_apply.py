@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from apply import apply as apply2, TABLE_PREFIX, TABLE_DELIMITER, get_table_name
+from apply import apply as apply2, get_table_name
 
 from schema import SCHEMA
 
@@ -29,7 +29,7 @@ class TestApply(TestCase):
 			Table(self.twenty_sec_table_name, connection=self.connection).delete()
 		except JSONResponseError, e:
 
-			if e.error_code != 'Cannot do operations on a non-existent table':
+			if e.error_code != 'ResourceNotFoundException':
 				raise e
 
 	def test_apply(self):
@@ -59,7 +59,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
@@ -73,7 +73,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, None]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
@@ -87,7 +87,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, None]},
@@ -101,7 +101,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'average', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
@@ -115,7 +115,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'average', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
@@ -129,7 +129,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'minimum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
@@ -143,7 +143,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'minimum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
@@ -157,7 +157,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'maximum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
@@ -171,7 +171,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'schema' : SCHEMA,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 6]}
+						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'maximum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
@@ -202,23 +202,34 @@ class TestApply(TestCase):
 			
 			e = test['expected']['item']
 
-			out = getMetric(test['expected']['table_name'], self.connection, e['metric'], e['start_time'])
+			out = get_metric(test['expected']['table_name'], self.connection, e['metric'], e['start_time'])
 
 			self.assertDictEqual(out, test['expected']['item'], '[%d] Test expected %s, got %s' % (test_counter, test['expected']['item'], out))
 
+			self.tearDown()
+
 def populate_tables(connection, table_data):
 
-	table = Table.create(
-		table_name=table_data['table_name'],
-		schema=table_data['schema'],
-		connection=connection
-	)
+	try:
+		table = Table(table_data['table_name'], connection=connection)
+		table.describe()
+
+	except JSONResponseError, e:
+
+		if e.error_code == 'ResourceNotFoundException':
+			table = Table.create(
+				table_name=table_data['table_name'],
+				schema=table_data['schema'],
+				connection=connection
+			)
+		else:
+			raise e
 
 	with table.batch_write() as batch:
 		for item in table_data['items']:
 			batch.put_item(data=item)
 
-def getMetric(table_name, connection, metric_name, start_time):
+def get_metric(table_name, connection, metric_name, start_time):
 
 	table = Table(table_name=table_name, connection=connection)
 
