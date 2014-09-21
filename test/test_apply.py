@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from apply import apply as apply2, get_table_name
+from apply import apply as apply2, get_table_name, TABLE_PREFIX, TABLE_JOINER
 
 from schema import DynamoDB_Schema
 
@@ -11,7 +11,7 @@ from boto.exception import JSONResponseError
 
 class TestApply(TestCase):
 
-	twenty_sec_table_name = get_table_name('20sec')
+	twenty_sec_table_name = get_table_name('20sec', '01-04-2014')
 
 	def setUp(self):
 		
@@ -200,6 +200,38 @@ class TestApply(TestCase):
 			self.assertDictEqual(out, test['expected']['item'], '[%d] Test expected %s, got %s' % (test_counter, test['expected']['item'], out))
 
 			self.tearDown()
+
+	def test_get_table_name(self):
+
+		tests = [
+			{# 20 sec
+				'resolution' : '20sec',
+				'start_time' : '01-04-2014 14:35:00',
+				'expected' : TABLE_PREFIX + TABLE_JOINER + '01-04-2014' + TABLE_JOINER + '20sec'
+			},
+			{# 2 min
+				'resolution' : '2min',
+				'start_time' : '01-12-2013 14:35:00',
+				'expected' : TABLE_PREFIX + TABLE_JOINER + '01-12-2013' + TABLE_JOINER + '2min'
+			},
+			{# Invalid start time
+				'resolution' : '20min',
+				'start_time' : '2014-01-04 14:35:00',
+				'expected' : Exception('Invalid start time.')
+			}
+		]
+
+		test_counter = 0
+		for test in tests:
+			test_counter += 1
+			
+			try:
+				out = get_table_name(test['resolution'], test['start_time'])
+			except Exception, e:
+				out = e.args
+				test["expected"] = test["expected"].args
+
+			self.assertEquals(out, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out))
 
 def populate_tables(connection, table_data):
 

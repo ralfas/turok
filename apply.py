@@ -5,6 +5,8 @@ from boto.dynamodb2.exceptions import ItemNotFound
 
 from schema import DynamoDB_Schema
 
+from message import date_format_regex
+
 import json
 
 TABLE_PREFIX = 'turok'
@@ -36,7 +38,7 @@ def apply(metric, start_time, resolution, datapoints, aggregation_type, connecti
 	 the existing value
 	"""
 
-	table_name = get_table_name(resolution)
+	table_name = get_table_name(resolution, start_time)
 
 	try:
 		table = Table(table_name, connection=connection)
@@ -64,9 +66,14 @@ def apply(metric, start_time, resolution, datapoints, aggregation_type, connecti
 
 	m.save()
 
-def get_table_name(resolution):
+def get_table_name(resolution, start_time):
 
-	return TABLE_PREFIX + TABLE_JOINER + resolution
+	matches = date_format_regex.search(start_time)
+
+	if matches is None:
+		raise Exception('Invalid start time.')
+
+	return TABLE_PREFIX + TABLE_JOINER + matches.group(0) + TABLE_JOINER + resolution
 
 def aggregate(existing_datapoints, new_datapoints, aggregation_type):
 
