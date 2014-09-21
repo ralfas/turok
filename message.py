@@ -29,6 +29,24 @@ class Message(object):
 
 		return False
 
+	def __dict__(self):
+
+		return {
+			'metric' : self.metric,
+			'datapoints' : self.datapoints,
+			'start_time' : self.start_time,
+			'resolution' : self.resolution,
+			'aggregation_type' : self.aggregation_type
+		}
+
+	def __str__(self):
+
+		return str(self.__dict__())
+
+	def __eq__(self, cmp):
+
+		return self.__dict__() == cmp.__dict__()
+
 def valid_metric(metric):
 	
 	if metric is not None:
@@ -66,3 +84,26 @@ def valid_aggregation_type(aggregation_type):
 		return True
 
 	return False
+
+def from_JSON(json_string):
+
+	try:
+		m_dict = json.loads(json_string)
+	except Exception, e:
+		raise Exception('Invalid JSON.')
+
+	if m_dict.keys() != list(required_keys):
+		raise Exception('Invalid data.')
+
+	m = Message(
+		metric = m_dict['metric'],
+		datapoints = m_dict['datapoints'],
+		start_time = m_dict['start_time'],
+		resolution = m_dict['resolution'],
+		aggregation_type = m_dict['aggregation_type']
+	)
+
+	if m.valid() is False:
+		raise Exception('Invalid data.')
+
+	return m

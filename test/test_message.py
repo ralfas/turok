@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from message import Message
+from message import Message, from_JSON
 
 class TestMessage(TestCase):
 
@@ -158,4 +158,33 @@ class TestMessage(TestCase):
 			test_counter += 1
 
 			out = test["message"].valid()
+			self.assertEquals(out, test["expected"], "[%d] Test expected %s, got %s" % (test_counter, test["expected"], out))
+
+	def test_from_JSON(self):
+
+		tests = [
+			{# Invalid JSON
+				"message" : "{'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1]}",
+				"expected" : Exception('Invalid JSON.')
+			},
+			{# Missing values
+				"message" : '{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : null}',
+				"expected" : Exception('Invalid data.')
+			},
+			{# Valid
+				"message" : '{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
+				"expected" : Message(metric = u"users.registered.count", aggregation_type = u"sum", start_time = u"01-04-2014 14:35:00", resolution = u"20sec", datapoints = [1.0, 2.0, 3.0])
+			}
+		]
+
+		test_counter = 0
+		for test in tests:
+			test_counter += 1
+
+			try:
+				out = from_JSON(test["message"])
+			except Exception, e:
+				out = e.args
+				test["expected"] = test["expected"].args
+
 			self.assertEquals(out, test["expected"], "[%d] Test expected %s, got %s" % (test_counter, test["expected"], out))

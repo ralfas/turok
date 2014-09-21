@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from fetch import fetch, MAX_ITEMS
+from message import Message as TMessage
 
 from boto.sqs.regioninfo import SQSRegionInfo
 from boto.sqs.message import Message
@@ -45,11 +46,29 @@ class TestFetch(TestCase):
 					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
 				],
 				'expected' : [
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
 					'fetch.successful.count',
 					'fetch.items.count'
+				]
+			},
+			{# Invalid change
+				'changes' : [
+					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : null}'
+				],
+				'expected' : [],
+				'expected_stats' : [
+					'fetch.invalid.values.count'
+				]
+			},
+			{# Invalid JSON
+				'changes' : [
+					"{'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1]}"
+				],
+				'expected' : [],
+				'expected_stats' : [
+					'fetch.invalid.json.count'
 				]
 			},
 			{# 10 changes, boundary test
@@ -66,16 +85,16 @@ class TestFetch(TestCase):
 					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
 				],
 				'expected' : [
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
 					'fetch.successful.count',
@@ -115,16 +134,16 @@ class TestFetch(TestCase):
 					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
 				],
 				'expected' : [
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-					'{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}'
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0]),
+					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
 					'fetch.successful.count',
@@ -145,18 +164,6 @@ class TestFetch(TestCase):
 					'fetch.items.count',
 					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
-					'fetch.items.count'
-				]
-			},
-			{# arbitrary data
-				'changes' : [
-					"arbitrary data"
-				],
-				'expected' : [
-					"arbitrary data"
-				],
-				'expected_stats' : [
 					'fetch.successful.count',
 					'fetch.items.count'
 				]
@@ -170,8 +177,7 @@ class TestFetch(TestCase):
 			self.populate_queue(test['changes'])
 			
 			out = fetch(items=MAX_ITEMS, queue=self.queue)
-			out_messages = [o.get_body() for o in out]
 
-			self.assertListEqual(out_messages, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out_messages))
+			self.assertListEqual(out, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out))
 
 			self.queue.clear()
