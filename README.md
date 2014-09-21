@@ -18,18 +18,31 @@ TODO
 
 ### Turok Message Format
 
+```
+Message:
+{
+	metric : String; `node1.messages_received.count`
+	start_time : String; `01-04-2014 14:35:00`
+	datapoints : JSON Encoded Datapoint List; [1, 2, 30000, 3, 40]
+	resolution : String; `20sec`, `1min`
+	aggregation_type : String; `sum`, `average`, `minimum`, `maximum`
+}
+```
+
 ## TurokD
 
 TODO
 
 ### Turok DynamoDB Schema
 
+```
 Table name: <TABLE_PREFIX><TABLE_JOINER><RESOLUTION> ; `turok_20sec`
 {
 	metric : String; `node1.messages_received.count`
 	start_time : String; `01-04-2014 14:35:00`
 	datapoints : JSON Encoded Datapoint List; `[1, 2, 30000, 3, 40]`
 }
+```
 
 DynamoDB only supports sets and not lists, so we need to serialise it for persistence.
 

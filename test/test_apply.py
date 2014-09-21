@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from apply import apply as apply2, get_table_name
 
-from schema import SCHEMA
+from schema import DynamoDB_Schema
 
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.layer1 import DynamoDBConnection
@@ -29,7 +29,10 @@ class TestApply(TestCase):
 			Table(self.twenty_sec_table_name, connection=self.connection).delete()
 		except JSONResponseError, e:
 
-			if e.error_code != 'ResourceNotFoundException':
+			if e.error_code == 'ResourceNotFoundException':
+				pass
+
+			else:
 				raise e
 
 	def test_apply(self):
@@ -45,7 +48,6 @@ class TestApply(TestCase):
 			{# fresh write, table exists
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : []
 				},
 				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
@@ -57,7 +59,6 @@ class TestApply(TestCase):
 			{# sum write, 0s
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
 					]
@@ -71,7 +72,6 @@ class TestApply(TestCase):
 			{# sum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
 					]
@@ -85,7 +85,6 @@ class TestApply(TestCase):
 			{# sum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
 					]
@@ -99,7 +98,6 @@ class TestApply(TestCase):
 			{# average write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
@@ -113,7 +111,6 @@ class TestApply(TestCase):
 			{# average write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
@@ -127,7 +124,6 @@ class TestApply(TestCase):
 			{# minimum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
@@ -141,7 +137,6 @@ class TestApply(TestCase):
 			{# minimum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
@@ -155,7 +150,6 @@ class TestApply(TestCase):
 			{# maximum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
@@ -169,7 +163,6 @@ class TestApply(TestCase):
 			{# maximum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
-					'schema' : SCHEMA,
 					'items' : [
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
@@ -219,7 +212,7 @@ def populate_tables(connection, table_data):
 		if e.error_code == 'ResourceNotFoundException':
 			table = Table.create(
 				table_name=table_data['table_name'],
-				schema=table_data['schema'],
+				schema=DynamoDB_Schema,
 				connection=connection
 			)
 		else:

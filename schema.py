@@ -1,6 +1,6 @@
 from boto.dynamodb2.fields import HashKey, RangeKey
 
-SCHEMA = [
+DynamoDB_Schema = [
 	HashKey('metric'),
 	RangeKey('start_time')
 ]

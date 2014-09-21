@@ -3,7 +3,7 @@ from boto.dynamodb2.items import Item
 from boto.exception import JSONResponseError
 from boto.dynamodb2.exceptions import ItemNotFound
 
-from schema import SCHEMA
+from schema import DynamoDB_Schema
 
 import json
 
@@ -45,7 +45,7 @@ def apply(metric, start_time, resolution, datapoints, aggregation_type, connecti
 	except JSONResponseError, e:
 
 		if e.error_code == 'ResourceNotFoundException':
-			table = Table.create(table_name, schema=SCHEMA, connection=connection)
+			table = Table.create(table_name, schema=DynamoDB_Schema, connection=connection)
 		else:
 			raise e
 
