@@ -12,7 +12,7 @@ import json
 TABLE_PREFIX = 'turok'
 TABLE_JOINER = '_'
 
-def apply(metric, start_time, resolution, datapoints, aggregation_type, connection):
+def apply(message, connection):
 	"""
 	Applies the specific change.
 
@@ -37,6 +37,12 @@ def apply(metric, start_time, resolution, datapoints, aggregation_type, connecti
 	- maximum: the maximum value will be stored for each measuremenet out of the new value and
 	 the existing value
 	"""
+
+	metric = message.metric
+	start_time = message.start_time
+	resolution = message.resolution
+	datapoints = message.datapoints
+	aggregation_type = message.aggregation_type
 
 	table_name = get_table_name(resolution, start_time)
 

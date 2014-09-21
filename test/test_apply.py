@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from apply import apply as apply2, get_table_name, TABLE_PREFIX, TABLE_JOINER
-
 from schema import DynamoDB_Schema
+from message import Message
 
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.layer1 import DynamoDBConnection
@@ -39,7 +39,7 @@ class TestApply(TestCase):
 
 		tests = [
 			{# fresh write, table doesn't exist
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
 					'apply.sum.count'
@@ -50,7 +50,7 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'items' : []
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
 					'apply.sum.count'
@@ -63,7 +63,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.sum.count'
@@ -76,7 +76,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 3, 6]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.sum.count'
@@ -89,7 +89,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, None]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.sum.count'
@@ -102,7 +102,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'average', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
 					'apply.average.count'
@@ -115,7 +115,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'average', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
 					'apply.average.count'
@@ -128,7 +128,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'minimum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
 					'apply.minimum.count'
@@ -141,7 +141,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'minimum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
 					'apply.minimum.count'
@@ -154,7 +154,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'maximum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, 0, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
 					'apply.maximum.count'
@@ -167,7 +167,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : {'metric' : 'users.registered.count', 'aggregation_type' : 'maximum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1, None, 0]},
+				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
 					'apply.maximum.count'
@@ -182,14 +182,8 @@ class TestApply(TestCase):
 			if test.has_key('existing_data'):
 				populate_tables(self.connection, test['existing_data'])
 
-			c = test['change']
-
 			apply2(
-				metric=c['metric'],
-				start_time=c['start_time'],
-				resolution=c['resolution'],
-				datapoints=c['datapoints'],
-				aggregation_type=c['aggregation_type'],
+				test['change'],
 				connection=self.connection
 			)
 			
