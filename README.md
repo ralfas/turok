@@ -44,6 +44,10 @@ Table name: <TABLE_PREFIX><TABLE_JOINER><DATE><TABLE_JOINER><RESOLUTION> ; `turo
 }
 ```
 
+Tables are partitioned by date:
+- to make applying retention policies simpler,
+- to make read and write DynamoDB provisioning optimisations possible.
+
 DynamoDB only supports sets and not lists, so we need to serialise it for persistence.
 
 ## Turok-Reader
