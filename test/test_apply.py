@@ -47,11 +47,11 @@ class TestApply(TestCase):
 
 		tests = [
 			{# fresh write, table doesn't exist
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.table.create.count',
-					'apply.metric.create.count',
+					'apply.table.create',
+					'apply.metric.create',
 				]
 			},
 			{# fresh write, table exists
@@ -59,136 +59,136 @@ class TestApply(TestCase):
 					'table_name' : self.twenty_sec_table_name,
 					'items' : []
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.metric.create.count'
+					'apply.metric.create'
 				]
 			},
 			{# sum write, 0s
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.sum.count'
+					'apply.metric.update',
+					'apply.aggregate.sum'
 				]
 			},
 			{# sum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.sum.count'
+					'apply.metric.update',
+					'apply.aggregate.sum'
 				]
 			},
 			{# sum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.sum.count'
+					'apply.metric.update',
+					'apply.aggregate.sum'
 				]
 			},
 			{# average write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.average.count'
+					'apply.metric.update',
+					'apply.aggregate.average'
 				]
 			},
 			{# average write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.average.count'
+					'apply.metric.update',
+					'apply.aggregate.average'
 				]
 			},
 			{# minimum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.minimum.count'
+					'apply.metric.update',
+					'apply.aggregate.minimum'
 				]
 			},
 			{# minimum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.minimum.count'
+					'apply.metric.update',
+					'apply.aggregate.minimum'
 				]
 			},
 			{# maximum write, existing None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.maximum.count'
+					'apply.metric.update',
+					'apply.aggregate.maximum'
 				]
 			},
 			{# maximum write, None
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : [
-						{'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
+						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
-				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
+				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
-					'apply.metric.update.count',
-					'apply.aggregate.maximum.count'
+					'apply.metric.update',
+					'apply.aggregate.maximum'
 				]
 			}
 		]

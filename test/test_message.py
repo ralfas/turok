@@ -13,7 +13,7 @@ class TestMessage(TestCase):
 			},
 			{# Valid
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -23,7 +23,7 @@ class TestMessage(TestCase):
 			},
 			{# Valid
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'maximum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -33,7 +33,7 @@ class TestMessage(TestCase):
 			},
 			{# Valid
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'minimum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -43,7 +43,7 @@ class TestMessage(TestCase):
 			},
 			{# Valid
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'average',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -63,7 +63,7 @@ class TestMessage(TestCase):
 			},
 			{# Missing aggregation_type
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = None,
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -73,7 +73,7 @@ class TestMessage(TestCase):
 			},
 			{# Unsupported aggregation_type
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'percentile',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -83,7 +83,7 @@ class TestMessage(TestCase):
 			},
 			{# Missing start_time
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = None,
 					resolution = '20sec',
@@ -93,7 +93,7 @@ class TestMessage(TestCase):
 			},
 			{# Invalid start_time
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '2014-01-04 14:35:00',
 					resolution = '20sec',
@@ -103,7 +103,7 @@ class TestMessage(TestCase):
 			},
 			{# Missing resolution
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = None,
@@ -113,7 +113,7 @@ class TestMessage(TestCase):
 			},
 			{# Invalid resolution
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = 'sec',
@@ -123,7 +123,7 @@ class TestMessage(TestCase):
 			},
 			{# Invalid resolution
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '10',
@@ -133,7 +133,7 @@ class TestMessage(TestCase):
 			},
 			{# Missing datapoints
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -143,7 +143,7 @@ class TestMessage(TestCase):
 			},
 			{# Empty datapoints
 				"message" : Message(
-					metric = 'users.registered.count',
+					metric = 'users.registered',
 					aggregation_type = 'sum',
 					start_time = '01-04-2014 14:35:00',
 					resolution = '20sec',
@@ -164,16 +164,16 @@ class TestMessage(TestCase):
 
 		tests = [
 			{# Invalid JSON
-				"message" : "{'metric' : 'users.registered.count', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1]}",
+				"message" : "{'metric' : 'users.registered', 'aggregation_type' : 'sum', 'start_time' : '01-04-2014 14:35:00', 'resolution' : '20sec', 'datapoints' : [1]}",
 				"expected" : Exception('Invalid JSON.')
 			},
 			{# Missing values
-				"message" : '{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : null}',
+				"message" : '{"metric" : "users.registered", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : null}',
 				"expected" : Exception('Invalid data.')
 			},
 			{# Valid
-				"message" : '{"metric" : "users.registered.count", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
-				"expected" : Message(metric = u"users.registered.count", aggregation_type = u"sum", start_time = u"01-04-2014 14:35:00", resolution = u"20sec", datapoints = [1.0, 2.0, 3.0])
+				"message" : '{"metric" : "users.registered", "aggregation_type" : "sum", "start_time" : "01-04-2014 14:35:00", "resolution" : "20sec", "datapoints" : [1.0, 2.0, 3.0]}',
+				"expected" : Message(metric = u"users.registered", aggregation_type = u"sum", start_time = u"01-04-2014 14:35:00", resolution = u"20sec", datapoints = [1.0, 2.0, 3.0])
 			}
 		]
 

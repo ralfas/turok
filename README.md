@@ -21,7 +21,7 @@ TODO
 ```
 Message:
 {
-	metric : String; `node1.messages_received.count`
+	metric : String; `node1.messages_received`
 	start_time : String; `01-04-2014 14:35:00`
 	datapoints : JSON Encoded Datapoint List; [1, 2, 30000, 3, 40]
 	resolution : String; `20sec`, `1min`
@@ -38,7 +38,7 @@ TODO
 ```
 Table name: <TABLE_PREFIX><TABLE_JOINER><DATE><TABLE_JOINER><RESOLUTION> ; `turok_01-04-2014_20sec`
 {
-	metric : String; `node1.messages_received.count`
+	metric : String; `node1.messages_received`
 	start_time : String; `01-04-2014 14:35:00`
 	datapoints : JSON Encoded Datapoint List; `[1, 2, 30000, 3, 40]`
 }

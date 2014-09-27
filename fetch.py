@@ -9,9 +9,9 @@ def fetch(items, queue, statsd):
 	q_messages = queue.get_messages(num_messages=items)
 
 	if len(q_messages) == 0:
-		statsd.incr('fetch.empty.count')
+		statsd.incr('fetch.empty')
 	else:
-		statsd.incr('fetch.not_empty.count')
+		statsd.incr('fetch.not_empty')
 
 	for q_m in q_messages:
 
@@ -20,15 +20,15 @@ def fetch(items, queue, statsd):
 		except Exception, e:
 			# invalid JSON or values
 			if str(e) == 'Invalid JSON.':
-				statsd.incr('fetch.invalid.json.count')
+				statsd.incr('fetch.invalid.json')
 				continue
 			elif str(e) == 'Invalid data.':
-				statsd.incr('fetch.invalid.values.count')
+				statsd.incr('fetch.invalid.values')
 				continue
 			else:
 				raise e
 
 		messages.append(m)
-		statsd.incr('fetch.items.count')
+		statsd.incr('fetch.items')
 
 	return messages

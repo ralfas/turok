@@ -54,7 +54,7 @@ def apply(message, connection, statsd):
 
 		if e.error_code == 'ResourceNotFoundException':
 			table = Table.create(table_name, schema=DynamoDB_Schema, connection=connection)
-			statsd.incr('apply.table.create.count')
+			statsd.incr('apply.table.create')
 		else:
 			raise e
 
@@ -63,14 +63,14 @@ def apply(message, connection, statsd):
 		m['datapoints'] = json.dumps(
 			aggregate(json.loads(m['datapoints']), datapoints, aggregation_type, statsd)
 		)
-		statsd.incr('apply.metric.update.count')
+		statsd.incr('apply.metric.update')
 
 	except ItemNotFound, e:
 		m = Item(table)
 		m['metric'] = metric
 		m['start_time'] = start_time
 		m['datapoints'] = json.dumps(datapoints)
-		statsd.incr('apply.metric.create.count')
+		statsd.incr('apply.metric.create')
 
 	m.save()
 
@@ -112,6 +112,6 @@ def aggregate(existing_datapoints, new_datapoints, aggregation_type, statsd):
 		existing_datapoints[counter] = d
 		counter += 1
 
-	statsd.incr('apply.aggregate.' + aggregation_type + '.count')
+	statsd.incr('apply.aggregate.' + aggregation_type)
 
 	return existing_datapoints
