@@ -48,18 +48,21 @@ def apply(message, connection, statsd):
 
 	try:
 		table = Table(table_name, connection=connection)
+		statsd.incr('apply.dynamodb.table.describe')
 		table.describe()
 
 	except JSONResponseError, e:
 
 		if e.error_code == 'ResourceNotFoundException':
+			statsd.incr('apply.dynamodb.table.create')
 			table = Table.create(table_name, schema=DynamoDB_Schema, connection=connection)
-			statsd.incr('apply.table.create')
 		else:
 			raise e
 
 	try:
+		statsd.incr('apply.dynamodb.table.get_item')
 		m = table.get_item(consistent=True, metric=metric, start_time=start_time)
+
 		m['datapoints'] = json.dumps(
 			aggregate(json.loads(m['datapoints']), datapoints, aggregation_type, statsd)
 		)
@@ -72,6 +75,7 @@ def apply(message, connection, statsd):
 		m['datapoints'] = json.dumps(datapoints)
 		statsd.incr('apply.metric.create')
 
+	statsd.incr('apply.dynamodb.item.write')
 	m.save()
 
 def get_table_name(resolution, start_time):

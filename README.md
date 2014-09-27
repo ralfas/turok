@@ -8,9 +8,12 @@ Turok is a timeseries database abstraction over DynamoDB.
 
 Turok consists of:
 - A library - `turok-lib` - for transforming metric data into Turok compatible data structures. These can then be pushed onto SQS.
-- An aggregator application - `turokd` - that consumes from SQS, applies aggregation rules as defined in the message and writes to DynamoDB.
-- A Graphite finder - `graphite-turok-reader` - that is able to read data from DynamoDB and present it to Graphite.
+- An aggregator application - `turokd` - that consumes from SQS, applies aggregation rules as defined in the message and writes to DynamoDB. For any new metric, `turokd` will also write to an SQS queue for `turok-indexer`.
+- An indexer application - `turok-indexer` - that consumes from SQS and updates the index stored on S3.
+- A Graphite finder - `graphite-turok-reader` - that is able to read data from DynamoDB using the index on S3 and present it to Graphite.
 - A Data Pipeline template - `turok-keeper` - that applies a configured retention policy per data resolution.
+
+Diagram: https://docs.google.com/drawings/d/1XZTNbfzcCVsesSF8TEH1g8TJVh_YX0wfQIbVlt7qFmE/
 
 ## Turok-Lib
 
@@ -49,6 +52,10 @@ Tables are partitioned by date:
 - to make read and write DynamoDB provisioning optimisations possible.
 
 DynamoDB only supports sets and not lists, so we need to serialise it for persistence.
+
+## Turok-Indexer
+
+TODO
 
 ## Turok-Reader
 

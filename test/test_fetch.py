@@ -45,6 +45,7 @@ class TestFetch(TestCase):
 				'changes' : [],
 				'expected' : [],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.empty'
 				]
 			},
@@ -56,6 +57,7 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.not_empty',
 					'fetch.items'
 				]
@@ -66,6 +68,7 @@ class TestFetch(TestCase):
 				],
 				'expected' : [],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.not_empty',
 					'fetch.invalid.values'
 				]
@@ -76,6 +79,7 @@ class TestFetch(TestCase):
 				],
 				'expected' : [],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.not_empty',
 					'fetch.invalid.json'
 				]
@@ -106,6 +110,7 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.not_empty',
 					'fetch.items',
 					'fetch.items',
@@ -146,6 +151,7 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
+					'fetch.sqs.get_messages',
 					'fetch.not_empty',
 					'fetch.items',
 					'fetch.items',

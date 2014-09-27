@@ -7,6 +7,7 @@ def fetch(items, queue, statsd):
 	messages = []
 
 	q_messages = queue.get_messages(num_messages=items)
+	statsd.incr('fetch.sqs.get_messages')
 
 	if len(q_messages) == 0:
 		statsd.incr('fetch.empty')

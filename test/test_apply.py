@@ -50,8 +50,11 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.table.create',
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.create',
+					'apply.dynamodb.table.get_item',
 					'apply.metric.create',
+					'apply.dynamodb.item.write'
 				]
 			},
 			{# fresh write, table exists
@@ -62,7 +65,10 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.metric.create'
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.metric.create',
+					'apply.dynamodb.item.write'
 				]
 			},
 			{# sum write, 0s
@@ -75,6 +81,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.sum'
 				]
@@ -89,6 +98,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.sum'
 				]
@@ -103,6 +115,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.sum'
 				]
@@ -117,6 +132,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.average'
 				]
@@ -131,6 +149,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.average'
 				]
@@ -145,6 +166,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.minimum'
 				]
@@ -159,6 +183,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.minimum'
 				]
@@ -173,6 +200,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.maximum'
 				]
@@ -187,6 +217,9 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
+					'apply.dynamodb.table.describe',
+					'apply.dynamodb.table.get_item',
+					'apply.dynamodb.item.write',
 					'apply.metric.update',
 					'apply.aggregate.maximum'
 				]
