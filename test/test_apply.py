@@ -9,6 +9,9 @@ from boto.dynamodb2.layer1 import DynamoDBConnection
 
 from boto.exception import JSONResponseError
 
+from statsd import StatsClient
+from . import assertStatsd
+
 class TestApply(TestCase):
 
 	twenty_sec_table_name = get_table_name('20sec', '01-04-2014')
@@ -22,6 +25,11 @@ class TestApply(TestCase):
 			aws_secret_access_key='secret',
 			is_secure=False
 		)
+
+		client = StatsClient(host='localhost', port=8125, prefix=None, maxudpsize=512)
+
+		self.statsd = client.pipeline()
+
 
 	def tearDown(self):
 
@@ -42,7 +50,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.sum.count'
+					'apply.table.create.count',
+					'apply.metric.create.count',
 				]
 			},
 			{# fresh write, table exists
@@ -53,7 +62,7 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
-					'apply.sum.count'
+					'apply.metric.create.count'
 				]
 			},
 			{# sum write, 0s
@@ -66,7 +75,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.sum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.sum.count'
 				]
 			},
 			{# sum write, existing None
@@ -79,7 +89,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.sum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.sum.count'
 				]
 			},
 			{# sum write, None
@@ -92,7 +103,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
-					'apply.sum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.sum.count'
 				]
 			},
 			{# average write, existing None
@@ -105,7 +117,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
-					'apply.average.count'
+					'apply.metric.update.count',
+					'apply.aggregate.average.count'
 				]
 			},
 			{# average write, None
@@ -118,7 +131,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
-					'apply.average.count'
+					'apply.metric.update.count',
+					'apply.aggregate.average.count'
 				]
 			},
 			{# minimum write, existing None
@@ -131,7 +145,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
-					'apply.minimum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.minimum.count'
 				]
 			},
 			{# minimum write, None
@@ -144,7 +159,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
-					'apply.minimum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.minimum.count'
 				]
 			},
 			{# maximum write, existing None
@@ -157,7 +173,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
-					'apply.maximum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.maximum.count'
 				]
 			},
 			{# maximum write, None
@@ -170,7 +187,8 @@ class TestApply(TestCase):
 				'change' : Message(metric = 'users.registered.count', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered.count', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
-					'apply.maximum.count'
+					'apply.metric.update.count',
+					'apply.aggregate.maximum.count'
 				]
 			}
 		]
@@ -182,9 +200,12 @@ class TestApply(TestCase):
 			if test.has_key('existing_data'):
 				populate_tables(self.connection, test['existing_data'])
 
+			self.statsd._stats = []
+
 			apply2(
-				test['change'],
-				connection=self.connection
+				message=test['change'],
+				connection=self.connection,
+				statsd=self.statsd
 			)
 			
 			e = test['expected']['item']
@@ -192,6 +213,7 @@ class TestApply(TestCase):
 			out = get_metric(test['expected']['table_name'], self.connection, e['metric'], e['start_time'])
 
 			self.assertDictEqual(out, test['expected']['item'], '[%d] Test expected %s, got %s' % (test_counter, test['expected']['item'], out))
+			assertStatsd(self, self.statsd, test['expected_stats'], test_counter, '[%d] Test expected %s, got %s')
 
 			self.tearDown()
 

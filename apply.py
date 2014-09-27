@@ -12,7 +12,7 @@ import json
 TABLE_PREFIX = 'turok'
 TABLE_JOINER = '_'
 
-def apply(message, connection):
+def apply(message, connection, statsd):
 	"""
 	Applies the specific change.
 
@@ -54,21 +54,23 @@ def apply(message, connection):
 
 		if e.error_code == 'ResourceNotFoundException':
 			table = Table.create(table_name, schema=DynamoDB_Schema, connection=connection)
+			statsd.incr('apply.table.create.count')
 		else:
 			raise e
 
 	try:
 		m = table.get_item(consistent=True, metric=metric, start_time=start_time)
 		m['datapoints'] = json.dumps(
-			aggregate(json.loads(m['datapoints']), datapoints, aggregation_type)
+			aggregate(json.loads(m['datapoints']), datapoints, aggregation_type, statsd)
 		)
+		statsd.incr('apply.metric.update.count')
 
 	except ItemNotFound, e:
-
 		m = Item(table)
 		m['metric'] = metric
 		m['start_time'] = start_time
 		m['datapoints'] = json.dumps(datapoints)
+		statsd.incr('apply.metric.create.count')
 
 	m.save()
 
@@ -81,7 +83,7 @@ def get_table_name(resolution, start_time):
 
 	return TABLE_PREFIX + TABLE_JOINER + matches.group(0) + TABLE_JOINER + resolution
 
-def aggregate(existing_datapoints, new_datapoints, aggregation_type):
+def aggregate(existing_datapoints, new_datapoints, aggregation_type, statsd):
 
 	counter = 0
 	while counter < len(existing_datapoints):
@@ -97,14 +99,19 @@ def aggregate(existing_datapoints, new_datapoints, aggregation_type):
 
 			if aggregation_type == 'sum':
 				d += new_d
+
 			elif aggregation_type == 'average':
 				d = (d + new_d) / 2
+
 			elif aggregation_type == 'minimum':
 				d = d if d < new_d else new_d
+
 			elif aggregation_type == 'maximum':
 				d = d if d > new_d else new_d
 
 		existing_datapoints[counter] = d
 		counter += 1
+
+	statsd.incr('apply.aggregate.' + aggregation_type + '.count')
 
 	return existing_datapoints

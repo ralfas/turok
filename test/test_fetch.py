@@ -6,6 +6,9 @@ from message import Message as TMessage
 from boto.sqs.regioninfo import SQSRegionInfo
 from boto.sqs.message import Message
 
+from statsd import StatsClient
+from . import assertStatsd
+
 class TestFetch(TestCase):
 
 	def setUp(self):
@@ -19,6 +22,10 @@ class TestFetch(TestCase):
 		)
 
 		self.queue = self.connection.create_queue('test_queue')
+
+		client = StatsClient(host='localhost', port=8125, prefix=None, maxudpsize=512)
+
+		self.statsd = client.pipeline()
 	
 	def populate_queue(self, messages):
 
@@ -49,7 +56,7 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
-					'fetch.successful.count',
+					'fetch.not_empty.count',
 					'fetch.items.count'
 				]
 			},
@@ -59,6 +66,7 @@ class TestFetch(TestCase):
 				],
 				'expected' : [],
 				'expected_stats' : [
+					'fetch.not_empty.count',
 					'fetch.invalid.values.count'
 				]
 			},
@@ -68,6 +76,7 @@ class TestFetch(TestCase):
 				],
 				'expected' : [],
 				'expected_stats' : [
+					'fetch.not_empty.count',
 					'fetch.invalid.json.count'
 				]
 			},
@@ -97,25 +106,16 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
-					'fetch.successful.count',
+					'fetch.not_empty.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count'
 				]
 			},
@@ -146,25 +146,16 @@ class TestFetch(TestCase):
 					TMessage(metric = "users.registered.count", aggregation_type = "sum", start_time = "01-04-2014 14:35:00", resolution = "20sec", datapoints = [1.0, 2.0, 3.0])
 				],
 				'expected_stats' : [
-					'fetch.successful.count',
+					'fetch.not_empty.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count',
-					'fetch.successful.count',
 					'fetch.items.count'
 				]
 			}
@@ -175,9 +166,11 @@ class TestFetch(TestCase):
 			test_counter += 1
 
 			self.populate_queue(test['changes'])
+			self.statsd._stats = []
 			
-			out = fetch(items=MAX_ITEMS, queue=self.queue)
+			out = fetch(items=MAX_ITEMS, queue=self.queue, statsd=self.statsd)
 
 			self.assertListEqual(out, test['expected'], '[%d] Test expected %s, got %s' % (test_counter, test['expected'], out))
+			assertStatsd(self, self.statsd, test['expected_stats'], test_counter, '[%d] Test expected %s, got %s')
 
 			self.queue.clear()
