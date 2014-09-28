@@ -36,6 +36,8 @@ Message:
 
 TODO
 
+Diagram: https://docs.google.com/drawings/d/1toZsDrXXuMDI15496urWTEOGPsw-4JweRf661tN6uCU/
+
 ### Turok DynamoDB Schema
 
 ```
