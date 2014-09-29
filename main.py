@@ -38,11 +38,13 @@ def main():
 	queue = get_SQSqueue()
 	db_connection = get_dynamoDBconnection()
 
-	while 1:
+	while True:
 		messages = fetch(items=MAX_ITEMS, queue=queue, statsd=statsd)
 
 		for message in messages:
-			apply2(message=message, connection=db_connection, statsd=statsd)
+			if apply2(message=message, connection=db_connection, statsd=statsd):
+				pass
+				# delete message from queue
 
 if __name__ == '__main__':
 	main()

@@ -2,6 +2,7 @@ from boto.dynamodb2.table import Table
 from boto.dynamodb2.items import Item
 from boto.exception import JSONResponseError
 from boto.dynamodb2.exceptions import ItemNotFound
+from boto.sqs.message import Message
 
 from schema import DynamoDB_Schema
 
@@ -12,7 +13,7 @@ import json
 TABLE_PREFIX = 'turok'
 TABLE_JOINER = '_'
 
-def apply(message, connection, statsd):
+def apply(message, dynamodb_connection, indexer_queue, statsd):
 	"""
 	Applies the specific change.
 
@@ -47,7 +48,7 @@ def apply(message, connection, statsd):
 	table_name = get_table_name(resolution, start_time)
 
 	try:
-		table = Table(table_name, connection=connection)
+		table = Table(table_name, connection=dynamodb_connection)
 		statsd.incr('apply.dynamodb.table.describe')
 		table.describe()
 
@@ -55,7 +56,7 @@ def apply(message, connection, statsd):
 
 		if e.error_code == 'ResourceNotFoundException':
 			statsd.incr('apply.dynamodb.table.create')
-			table = Table.create(table_name, schema=DynamoDB_Schema, connection=connection)
+			table = Table.create(table_name, schema=DynamoDB_Schema, connection=dynamodb_connection)
 		else:
 			raise e
 
@@ -75,8 +76,16 @@ def apply(message, connection, statsd):
 		m['datapoints'] = json.dumps(datapoints)
 		statsd.incr('apply.metric.create')
 
+		indexer_message = Message()
+		indexer_message.set_body(metric)
+		indexer_message.message_attributes = {'resolution' : {'data_type' : 'String', 'string_value' : resolution}}
+		statsd.incr('apply.sqs.indexer.write')
+		indexer_queue.write(indexer_message)
+
 	statsd.incr('apply.dynamodb.item.write')
 	m.save()
+
+	return True
 
 def get_table_name(resolution, start_time):
 

@@ -2,10 +2,13 @@ from unittest import TestCase
 
 from apply import apply as apply2, get_table_name, TABLE_PREFIX, TABLE_JOINER
 from schema import DynamoDB_Schema
-from message import Message
+from message import Message as TMessage
 
 from boto.dynamodb2.table import Table
 from boto.dynamodb2.layer1 import DynamoDBConnection
+
+from boto.sqs.regioninfo import SQSRegionInfo
+from boto.sqs.message import Message
 
 from boto.exception import JSONResponseError
 
@@ -18,7 +21,7 @@ class TestApply(TestCase):
 
 	def setUp(self):
 		
-		self.connection = DynamoDBConnection(
+		self.dynamodb_connection = DynamoDBConnection(
 			host='localhost',
 			port=8000,
 			aws_access_key_id='id',
@@ -30,11 +33,20 @@ class TestApply(TestCase):
 
 		self.statsd = client.pipeline()
 
+		sqsregioninfo = SQSRegionInfo(name='localhost_region', endpoint='localhost')
+		self.sqs_connection = sqsregioninfo.connect(
+			port=8001,
+			aws_access_key_id='id',
+			aws_secret_access_key='secret',
+			is_secure=False
+		)
 
-	def tearDown(self):
+		self.indexer_queue = self.sqs_connection.create_queue('test_indexer_queue')
+
+	def tear_down_table(self):
 
 		try:
-			Table(self.twenty_sec_table_name, connection=self.connection).delete()
+			Table(self.twenty_sec_table_name, connection=self.dynamodb_connection).delete()
 		except JSONResponseError, e:
 
 			if e.error_code == 'ResourceNotFoundException':
@@ -43,32 +55,40 @@ class TestApply(TestCase):
 			else:
 				raise e
 
+	def tearDown(self):
+
+		self.sqs_connection.delete_queue(self.indexer_queue)
+		self.tear_down_table()
+
 	def test_apply(self):
 
 		tests = [
 			{# fresh write, table doesn't exist
-				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
 					'apply.dynamodb.table.create',
 					'apply.dynamodb.table.get_item',
 					'apply.metric.create',
-					'apply.dynamodb.item.write'
-				]
+					'apply.dynamodb.item.write',
+					'apply.sqs.indexer.write'
+				],
+				'expected_indexer_message' : {'body' : 'users.registered', 'resolution' : '20sec'}
 			},
 			{# fresh write, table exists
 				'existing_data' : {
 					'table_name' : self.twenty_sec_table_name,
 					'items' : []
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
 					'apply.dynamodb.table.get_item',
 					'apply.metric.create',
-					'apply.dynamodb.item.write'
+					'apply.dynamodb.item.write',
+					'apply.sqs.indexer.write'
 				]
 			},
 			{# sum write, 0s
@@ -78,7 +98,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -95,7 +115,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, null]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 3, 6]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -112,7 +132,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 3, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'sum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, None]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[2, 3, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -129,7 +149,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -146,7 +166,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'average', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 3]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -163,7 +183,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -180,7 +200,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'minimum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 0]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -197,7 +217,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, null, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, 0, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -214,7 +234,7 @@ class TestApply(TestCase):
 						{'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}
 					]
 				},
-				'change' : Message(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
+				'change' : TMessage(metric = 'users.registered', aggregation_type = 'maximum', start_time = '01-04-2014 14:35:00', resolution = '20sec', datapoints = [1, None, 0]),
 				'expected' : {'table_name' : self.twenty_sec_table_name, 'item' : {'metric' : 'users.registered', 'start_time' : '01-04-2014 14:35:00', 'datapoints' : '[1, 0, 6]'}},
 				'expected_stats' : [
 					'apply.dynamodb.table.describe',
@@ -231,24 +251,34 @@ class TestApply(TestCase):
 			test_counter += 1
 			
 			if test.has_key('existing_data'):
-				populate_tables(self.connection, test['existing_data'])
+				populate_tables(self.dynamodb_connection, test['existing_data'])
 
 			self.statsd._stats = []
 
 			apply2(
 				message=test['change'],
-				connection=self.connection,
+				dynamodb_connection=self.dynamodb_connection,
+				indexer_queue=self.indexer_queue,
 				statsd=self.statsd
 			)
 			
 			e = test['expected']['item']
 
-			out = get_metric(test['expected']['table_name'], self.connection, e['metric'], e['start_time'])
+			out = get_metric(test['expected']['table_name'], self.dynamodb_connection, e['metric'], e['start_time'])
 
 			self.assertDictEqual(out, test['expected']['item'], '[%d] Test expected %s, got %s' % (test_counter, test['expected']['item'], out))
 			assertStatsd(self, self.statsd, test['expected_stats'], test_counter, '[%d] Test expected %s, got %s')
+			
+			if test.has_key('expected_indexer_message'):
 
-			self.tearDown()
+				indexer_messages = self.indexer_queue.get_messages(message_attributes=['*'])
+				self.assertEquals(len(indexer_messages), 1, '[%d] Test expected an indexer message, got none.' % test_counter)
+
+				indexer_message = {'body' : indexer_messages[0].get_body(), 'resolution' : indexer_messages[0].message_attributes['resolution']['string_value']}
+				self.assertDictEqual(indexer_message, test['expected_indexer_message'], '[%d] Test expected %s, got %s' % (test_counter, test['expected_indexer_message'], indexer_message))
+
+			self.indexer_queue.clear()
+			self.tear_down_table()
 
 	def test_get_table_name(self):
 
